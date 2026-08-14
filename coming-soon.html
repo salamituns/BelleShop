@@ -63,17 +63,18 @@
               <div class="modal__inner">
                 <div class="modal__centered password-modal__content page-width text-center">
                   <p class="password__form-heading h4">Enter store using password</p>
-                  <form method="post" action="http://annimexweb.com/password" id="login_form" accept-charset="UTF-8" class="storefront-password-form">
+                  <form method="post" action="/password" id="login_form" accept-charset="UTF-8" class="storefront-password-form" aria-disabled="true" onsubmit="return false;">
                     <input type="hidden" name="form_type" value="storefront_password">
                     <input type="hidden" name="utf8" value="✓">
                     <label class="label--hidden">Password</label>
                     <div class="input-group password__input-group">
                       <input type="password" name="password" id="Password" class="input-group__field input--content-color" placeholder="Your password">
                       <span class="input-group__btn">
-                      <button type="submit" name="commit" class="btn btn--narrow">Enter</button>
+                      <button type="submit" name="commit" class="btn btn--narrow" disabled aria-disabled="true" title="Store login is not available yet">Enter</button>
                       </span> </div>
+                    <p role="status">Store login is not available yet.</p>
                   </form>
-                  <p>Are you the store owner? <a href="http://annimexweb.com/admin" class="text-link">Log in here</a></p>
+                  <p>Are you the store owner? <a href="/admin" class="text-link">Log in here</a></p>
                 </div>
               </div>
               <button type="button" class="modal__close js-modal-close text-link"> <i class="anm anm-times-l"></i> <span class="icon__fallback-text">"Close (esc)"</span> </button>

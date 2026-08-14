@@ -549,9 +549,9 @@
                 <!--Main Content-->
                 <div class="col-12 col-sm-12 col-md-12 col-lg-12 main-col">
                 	<div class="custom-search">
-                        <form action="http://annimexweb.com/search" method="get" class="input-group search-header search" role="search" style="position: relative;">
+                        <form action="/search" method="get" class="input-group search-header search" role="search" style="position: relative;" aria-disabled="true" onsubmit="return false;">
                             <input class="search-header__input search__input input-group__field" type="search" name="q" placeholder="Search" aria-label="Search" autocomplete="off">
-                            <span class="input-group__btn"><button class="btnSearch" type="submit"> <i class="icon anm anm-search-l"></i> </button></span>
+                            <span class="input-group__btn"><button class="btnSearch" type="submit" disabled aria-disabled="true" title="Search is not available yet"> <i class="icon anm anm-search-l"></i> </button></span>
                         </form>
                     </div>
                     <div class="blog--list-view blog--grid-load-more">

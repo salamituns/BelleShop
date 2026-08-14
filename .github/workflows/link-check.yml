@@ -1,0 +1,18 @@
+name: Endpoint safety
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  check-endpoints:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Reject external form actions and plain HTTP URLs
+        run: ./scripts/check-endpoints.sh
