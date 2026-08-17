@@ -10,10 +10,12 @@ echo "  Ingress Endpoint: http://$INGRESS_IP (Host: $HOST_HEADER)"
 echo "========================================================"
 
 echo ""
-echo ">>> [1/5] Testing Frontend (Next.js 15):"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/")
-STATIC_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/next.svg")
-echo "HTML Status: $HTTP_CODE | Static Asset (/next.svg) Status: $STATIC_CODE"
+echo ">>> [1/5] Testing Frontend (Belle Multipurpose eCommerce Storefront):"
+HTML_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/")
+CSS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/assets/css/style.css")
+JS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/assets/js/main.js")
+IMG_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/assets/images/logo.svg")
+echo "HTML Status: $HTML_CODE | CSS Status: $CSS_CODE | JS Status: $JS_CODE | Logo Status: $IMG_CODE"
 
 echo ""
 echo ">>> [2/5] Testing Backend Health Check (/api/healthz):"
