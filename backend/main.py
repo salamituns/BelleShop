@@ -91,8 +91,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return user
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 # --- FastAPI App ---
-app = FastAPI()
+app = FastAPI(title="BelleShop Backend API")
+
+# Expose Prometheus metrics on /metrics
+Instrumentator().instrument(app).expose(app)
 
 @app.get("/healthz")
 def health_check():

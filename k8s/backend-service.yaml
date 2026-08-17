@@ -3,11 +3,14 @@ kind: Service
 metadata:
   name: backend
   namespace: dev
+  labels:
+    app: backend
 spec:
   selector:
     app: backend
   ports:
-    - port: 8000
+    - name: http
+      port: 8000
       targetPort: 8000
       nodePort: 30081
   type: NodePort 
