@@ -1,0 +1,141 @@
+name: BelleShop Gitea Actions CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ gitea.workflow }}-${{ gitea.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Backend Automated Unit Tests (Pytest)
+  # -------------------------------------------------------------
+  backend-test:
+    name: Backend Unit Tests & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir -r backend/requirements.txt
+
+      - name: Run Pytest Test Suite
+        run: |
+          PYTHONPATH=backend pytest backend/test_main.py -v
+
+  # -------------------------------------------------------------
+  # Job 2: SonarQube Code Quality & Security Scan
+  # -------------------------------------------------------------
+  sonarqube-scan:
+    name: SonarQube Static Analysis
+    needs: [backend-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        run: |
+          docker run --rm \
+            -e SONAR_HOST_URL="http://192.168.1.86:9000" \
+            -v "${{ gitea.workspace }}:/usr/src" \
+            sonarsource/sonar-scanner-cli \
+            -Dsonar.projectKey=belleshop \
+            -Dsonar.projectName="BelleShop E-Commerce" \
+            -Dsonar.sources=backend,frontend \
+            -Dsonar.exclusions="**/node_modules/**,**/.next/**,**/*.tar,**/.venv/**" || true
+
+  # -------------------------------------------------------------
+  # Job 3: Frontend Build & Lint (Next.js 15)
+  # -------------------------------------------------------------
+  frontend-build:
+    name: Frontend Lint & Standalone Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Next.js Standalone Build
+        run: npm run build
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://belleshop.local/api
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # -------------------------------------------------------------
+  # Job 4: Container Build & Verification
+  # -------------------------------------------------------------
+  container-build:
+    name: Multi-Stage Docker Image Build
+    needs: [backend-test, frontend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Build Hardened Backend Image
+        run: |
+          docker build -t belleshop-backend:${{ gitea.sha }} -t belleshop-backend:latest ./backend
+
+      - name: Build Hardened Frontend Image
+        run: |
+          docker build -t belleshop-frontend:${{ gitea.sha }} -t belleshop-frontend:latest ./frontend
+
+  # -------------------------------------------------------------
+  # Job 5: Automated GitOps Release (Update K8s Manifests)
+  # -------------------------------------------------------------
+  gitops-release:
+    name: GitOps Release & Argo Rollouts Trigger
+    needs: [container-build]
+    if: gitea.ref == 'refs/heads/main' && gitea.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITEA_TOKEN }}
+
+      - name: Update Rollout Manifest Tag
+        run: |
+          SHORT_SHA=$(echo ${{ gitea.sha }} | cut -c1-7)
+          echo "Promoting image tag to: ${SHORT_SHA}"
+          
+          # Update k8s/backend-rollout.yaml
+          sed -i "s|image: belleshop-backend:.*|image: belleshop-backend:${SHORT_SHA}|g" k8s/backend-rollout.yaml
+          
+          git config user.name "Gitea Actions Bot"
+          git config user.email "actions@gitea.stratdevs.com"
+          git add k8s/backend-rollout.yaml
+          
+          # Commit and push with [skip ci] to prevent recursive workflow triggers
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "ci(release): promote backend to ${SHORT_SHA} [skip ci]"
+            git push origin main
+            echo "🎉 Manifest updated! ArgoCD & Argo Rollouts will execute the Canary deployment!"
+          else
+            echo "No manifest changes detected."
+          fi
