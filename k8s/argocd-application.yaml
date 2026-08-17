@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: belleshop
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # 1. SOURCE: Where are the Kubernetes manifests stored?
+  source:
+    repoURL: 'https://github.com/salamituns/BelleShop.git'
+    targetRevision: main
+    path: k8s
+
+  # 2. DESTINATION: Where should ArgoCD deploy them?
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: dev
+
+  # 3. SYNC POLICY: How should ArgoCD keep them in sync?
+  syncPolicy:
+    automated:
+      prune: true     # Automatically delete k8s objects if they are deleted from Git
+      selfHeal: true  # Automatically revert manual changes made directly via kubectl
+    syncOptions:
+      - CreateNamespace=true
