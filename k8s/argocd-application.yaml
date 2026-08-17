@@ -10,7 +10,7 @@ spec:
 
   # 1. SOURCE: Where are the Kubernetes manifests stored?
   source:
-    repoURL: 'https://github.com/salamituns/BelleShop.git'
+    repoURL: 'https://gitea.stratdevs.com/tunsgit/BelleShop.git'
     targetRevision: main
     path: k8s
 
