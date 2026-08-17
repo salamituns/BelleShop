@@ -17,7 +17,7 @@ spec:
       canaryService: backend-canary
       trafficRouting:
         nginx:
-          stableIngress: belleshop-ingress
+          stableIngress: belleshop-api-ingress
       steps:
         # Step 1: Route 10% traffic to Canary
         - setWeight: 10

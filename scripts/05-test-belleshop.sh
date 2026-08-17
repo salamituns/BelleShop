@@ -12,7 +12,8 @@ echo "========================================================"
 echo ""
 echo ">>> [1/5] Testing Frontend (Next.js 15):"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/")
-echo "HTTP Status: $HTTP_CODE"
+STATIC_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOST_HEADER" "http://$INGRESS_IP/next.svg")
+echo "HTML Status: $HTTP_CODE | Static Asset (/next.svg) Status: $STATIC_CODE"
 
 echo ""
 echo ">>> [2/5] Testing Backend Health Check (/api/healthz):"
@@ -21,7 +22,7 @@ echo ""
 
 RANDOM_ID=$((RANDOM % 9000 + 1000))
 TEST_USER="engineer_${RANDOM_ID}"
-TEST_PASS="P@ssw0rd_${RANDOM_ID}!"
+TEST_PASS="Password_${RANDOM_ID}"
 
 echo ""
 echo ">>> [3/5] Testing User Registration in MySQL (user: $TEST_USER):"
@@ -32,8 +33,9 @@ echo ""
 
 echo ""
 echo ">>> [4/5] Logging in to retrieve JWT Access Token:"
-TOKEN_RES=$(curl -s -X POST -H "Host: $HOST_HEADER" -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=$TEST_USER&password=$TEST_PASS" \
+TOKEN_RES=$(curl -s -X POST -H "Host: $HOST_HEADER" \
+  --data-urlencode "username=$TEST_USER" \
+  --data-urlencode "password=$TEST_PASS" \
   "http://$INGRESS_IP/api/token")
 echo "Token response: $TOKEN_RES"
 
