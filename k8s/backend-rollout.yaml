@@ -1,5 +1,5 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: backend
   namespace: dev
@@ -7,9 +7,28 @@ metadata:
     app: backend
 spec:
   replicas: 2
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: backend
+  strategy:
+    canary:
+      stableService: backend
+      canaryService: backend-canary
+      trafficRouting:
+        nginx:
+          stableIngress: belleshop-ingress
+      steps:
+        # Step 1: Route 10% traffic to Canary
+        - setWeight: 10
+        - pause: { duration: 15s }
+        # Step 2: Route 50% traffic to Canary
+        - setWeight: 50
+        - pause: { duration: 15s }
+        # Step 3: Analyze Prometheus Error Rates before final 100% promotion
+        - analysis:
+            templates:
+              - templateName: success-rate
   template:
     metadata:
       labels:
